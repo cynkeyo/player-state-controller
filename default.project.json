@@ -1,0 +1,12 @@
+{
+  "name": "player-state-controller",
+  "tree": {
+    "$className": "DataModel",
+    "$path": "src",
+
+    "ReplicatedStorage":{
+      "$className": "ReplicatedStorage",
+      "$path": "src/ReplicatedStorage"
+    }
+  }
+}
