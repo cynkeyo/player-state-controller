@@ -12,9 +12,11 @@ export type animatorState = {
     currentTimePosition: number,
     animFadeTime: number,
     animSpeed: number,
+    jumpAnimTime: number
 }
 
 type Methods = {
+    ToggleExternalState: (boolean) -> (),
     IsExposed: () -> boolean,
     SetState: (animatorState) -> (),
     GetCurrentState: () -> (animatorState),

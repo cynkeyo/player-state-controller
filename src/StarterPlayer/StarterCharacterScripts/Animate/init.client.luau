@@ -9,7 +9,7 @@ local LeftShoulder = Torso:WaitForChild("Left Shoulder")
 local RightHip = Torso:WaitForChild("Right Hip")
 local LeftHip = Torso:WaitForChild("Left Hip")
 local Neck = Torso:WaitForChild("Neck")
-local Humanoid = Figure:WaitForChild("Humanoid")
+local Humanoid: Humanoid = Figure:WaitForChild("Humanoid")
 local pose = "Standing"
 
 local EMOTE_TRANSITION_TIME = 0.1
@@ -246,10 +246,8 @@ function playAnimation(animName, transitionTime, humanoid)
 		roll = roll - animTable[animName][idx].weight
 		idx = idx + 1
 	end
---		print(animName .. " " .. idx .. " [" .. origRoll .. "]")
+--		print(animaame .. " " .. idx .. " [" .. origRoll .. "]")
 	local anim = animTable[animName][idx].anim
-
-	print(animName)
 
 	-- switch animation		
 	if (anim ~= currentAnimInstance) then
@@ -479,8 +477,6 @@ function move(time)
 		jumpAnimTime = jumpAnimTime - deltaTime
 	end
 
-	print(pose)
-
 	if (pose == "FreeFall" and jumpAnimTime <= 0) then
 		playAnimation("fall", fallTransitionTime, Humanoid)
 	elseif (pose == "Seated") then
@@ -532,52 +528,7 @@ function move(time)
 	end
 end
 
--- connect events
-Humanoid.Died:connect(onDied)
-Humanoid.Running:connect(onRunning)
-Humanoid.Jumping:connect(onJumping)
-Humanoid.Climbing:connect(onClimbing)
-Humanoid.GettingUp:connect(onGettingUp)
-Humanoid.FreeFalling:connect(onFreeFall)
-Humanoid.FallingDown:connect(onFallingDown)
-Humanoid.Seated:connect(onSeated)
-Humanoid.PlatformStanding:connect(onPlatformStanding)
-Humanoid.Swimming:connect(onSwimming)
 
-print("blud")
----- setup emote chat hook
-game:GetService("Players").LocalPlayer.Chatted:connect(function(msg)
-	local emote = ""
-	if msg == "/e dance" then
-		emote = dances[math.random(1, #dances)]
-	elseif (string.sub(msg, 1, 3) == "/e ") then
-		emote = string.sub(msg, 4)
-	elseif (string.sub(msg, 1, 7) == "/emote ") then
-		emote = string.sub(msg, 8)
-	end
-
-	if (pose == "Standing" and emoteNames[emote] ~= nil) then
-		playAnimation(emote, 0.1, Humanoid)
-	end
-
-end)
-
--- emote bindable hook
-script:WaitForChild("PlayEmote").OnInvoke = function(emote)
-	-- Only play emotes when idling
-	if pose ~= "Standing" then
-		return
-	end
-	if emoteNames[emote] ~= nil then
-		-- Default emotes
-		playAnimation(emote, EMOTE_TRANSITION_TIME, Humanoid)
-
-		return true, currentAnimTrack
-	end
-
-	-- Return false to indicate that the emote could not be played
-	return false
-end
 
 -- additional stuff added for exposing methods for character state saving
 -- cynkeyo's stuff ///
@@ -596,22 +547,18 @@ function playAnimationFromState(animName, transitionTime, humanoid, timePosition
 	--		print(animName .. " " .. idx .. " [" .. origRoll .. "]")
 	local anim = animTable[animName][idx].anim
 
-	print(animName)
-
 	-- switch animation		
 
 	if (anim ~= currentAnimInstance) then
+
 		local utilizedTransitionTime = timePosition and 0 or transitionTime
 
-		print(utilizedTransitionTime)
-
 		if (currentAnimTrack ~= nil) then
-			print("u shouldnt run lol")
 			currentAnimTrack:Stop(utilizedTransitionTime)
 			currentAnimTrack:Destroy()
 		end
 
-		currentAnimSpeed = 1.0
+		currentAnimSpeed = animSpeed 
 
 		-- load it to the humanoid; get AnimationTrack
 		currentAnimTrack = humanoid:LoadAnimation(anim)
@@ -619,18 +566,18 @@ function playAnimationFromState(animName, transitionTime, humanoid, timePosition
 		
 		-- play the animation
 
-		currentAnimTrack:Play(utilizedTransitionTime)
+		if animSpeed then
+			currentAnimTrack:Play(utilizedTransitionTime, 1, animSpeed)
+		else
+			currentAnimTrack:Play(utilizedTransitionTime)
+		end
+
 
 		-- allows for replaying a saved animation at the saved state.
 		if timePosition then
 			currentAnimTrack.TimePosition = timePosition
 		end
 
-		if animSpeed then
-			currentAnimTrack:AdjustSpeed(animSpeed)
-		end
-
-		print(timePosition)
 
 		currentAnimFadeTime = transitionTime
 		currentAnim = animName
@@ -641,23 +588,21 @@ function playAnimationFromState(animName, transitionTime, humanoid, timePosition
 			currentAnimKeyframeHandler:disconnect()
 		end
 		currentAnimKeyframeHandler = currentAnimTrack.KeyframeReached:connect(keyFrameReachedFunc)
-
 	end
 
 end
 
 function getCurrentState()
-	if currentAnimTrack then
-		print(currentAnimTrack.TimePosition)
-	end
 	local timePos = currentAnimTrack and currentAnimTrack.TimePosition or 0
+	local animSpeed = currentAnimTrack and currentAnimTrack.Speed or currentAnimSpeed
 
 	return {
 		currentPose = pose,
 		currentAnimName = currentAnim,
 		currentTimePosition = timePos,
 		animFadeTime = currentAnimFadeTime,
-		animSpeed = currentAnimSpeed
+		animSpeed = animSpeed,
+		jumpAnimTime = jumpAnimTime
 	}
 end
 
@@ -703,27 +648,110 @@ function stopToolAnimationsInstantaneously()
 end
 
 function setState(animatorState)
-	print("SET STATE START")
 	if not animatorState then
 		error("Expected a animatorState, got nil.")
 	end
 
+	jumpAnimTime = animatorState.jumpAnimTime
+	pose = animatorState.currentPose	
+
 	stopAllAnimationsInstantaneously()
 	stopToolAnimationsInstantaneously()
 
-	pose = animatorState.currentPose	
+	print(animatorState.jumpAnimTime)
+
 	playAnimationFromState(animatorState.currentAnimName, animatorState.animFadeTime, Humanoid, animatorState.currentTimePosition, animatorState.animSpeed)
+end
+
+-- allows us to disable the firing of connections and the move update function.
+local acceptsExternalState = true
+
+function toggleExternalState(toggle: boolean)
+
 end
 
 Methods.GetCurrentState = getCurrentState
 Methods.SetState = setState 
-
-print(Methods)
+Methods.ToggleExternalState = toggleExternalState 
 
 Methods.__exposed = true
 
 -- cynkeyo's stuff end ///
+-- IF IT WOULD BE THAT SIMPLE. sorry, I couldn't just append behavior on top of this, had to do some MINOR changes to the behavior.
+-- By minor changes I mean being able to alter internal state from outside, plus disabling external state checking. So far the behaviour stays the same.
 
+
+
+-- connect events
+
+-- will shield us from unwanted animation playbacks
+local function connectionWrapper(signal, handler)
+	signal:connect(function(...)
+		if not acceptsExternalState then
+			return 	
+		end
+
+		handler(...)
+	end)
+end
+
+connectionWrapper(Humanoid.Died, onDied)
+connectionWrapper(Humanoid.Running, onRunning)
+connectionWrapper(Humanoid.Jumping, onJumping)
+connectionWrapper(Humanoid.Climbing, onClimbing)
+connectionWrapper(Humanoid.GettingUp, onGettingUp)
+connectionWrapper(Humanoid.FreeFalling, onFreeFall)
+connectionWrapper(Humanoid.FallingDown, onFallingDown)
+connectionWrapper(Humanoid.Seated, onSeated)
+connectionWrapper(Humanoid.PlatformStanding, onPlatformStanding)
+connectionWrapper(Humanoid.Swimming, onSwimming)
+
+-- Humanoid.Died:connect(onDied)
+-- Humanoid.Running:connect(onRunning)
+-- Humanoid.Jumping:connect(onJumping)
+-- Humanoid.Climbing:connect(onClimbing)
+-- Humanoid.GettingUp:connect(onGettingUp)
+-- Humanoid.FreeFalling:connect(onFreeFall)
+-- Humanoid.FallingDown:connect(onFallingDown)
+-- Humanoid.Seated:connect(onSeated)
+-- Humanoid.PlatformStanding:connect(onPlatformStanding)
+-- Humanoid.Swimming:connect(onSwimming)
+
+
+
+---- setup emote chat hook
+game:GetService("Players").LocalPlayer.Chatted:connect(function(msg)
+	local emote = ""
+	if msg == "/e dance" then
+		emote = dances[math.random(1, #dances)]
+	elseif (string.sub(msg, 1, 3) == "/e ") then
+		emote = string.sub(msg, 4)
+	elseif (string.sub(msg, 1, 7) == "/emote ") then
+		emote = string.sub(msg, 8)
+	end
+
+	if (pose == "Standing" and emoteNames[emote] ~= nil) then
+		playAnimation(emote, 0.1, Humanoid)
+	end
+
+end)
+
+-- emote bindable hook
+script:WaitForChild("PlayEmote").OnInvoke = function(emote)
+	-- Only play emotes when idling
+	if pose ~= "Standing" then
+		return
+	end
+	if emoteNames[emote] ~= nil then
+		-- Default emotes
+		playAnimation(emote, EMOTE_TRANSITION_TIME, Humanoid)
+
+		return true, currentAnimTrack
+	end
+
+	-- Return false to indicate that the emote could not be played
+	return false
+end
 -- main program
 
 -- initialize to idle
@@ -732,5 +760,9 @@ pose = "Standing"
 
 while Figure.Parent ~= nil do
 	local _, time = wait(0.1)
+	if not acceptsExternalState then
+		continue
+	end
+
 	move(time)
 end

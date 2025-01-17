@@ -4,18 +4,20 @@
 local RunService = game:GetService("RunService")
 
 type AnimatorMethods = {
+    ToggleExternalState: (boolean) -> (),
     IsExposed: () -> boolean,
     SetState: (animatorState) -> (),
     GetCurrentState: () -> (animatorState),
     __exposed: boolean
 }
 
-type animatorState = {
+export type animatorState = {
     currentPose: string,
     currentAnimName: string,
     currentTimePosition: number,
     animFadeTime: number,
     animSpeed: number,
+    jumpAnimTime: number
 }
 
 type motorTransforms = {
@@ -123,7 +125,10 @@ function CharacterState.fromCharacter(Character)
 	local AnimatorMethods: AnimatorMethods = require(Animator.Methods)
 
 	local self = setmetatable({}, CharacterState)
+	
+	RunService.PostSimulation:Wait()
 
+	self.Motor6DTransforms = getMotorTransformsFromCharacter(Character)
 	self.RootCFrame = RootPart.CFrame
 	self.RootLinearVelocity = RootPart.AssemblyLinearVelocity
 	self.RootAngularVelocity = RootPart.AssemblyAngularVelocity
@@ -131,6 +136,18 @@ function CharacterState.fromCharacter(Character)
 	self.AnimatorState = AnimatorMethods.GetCurrentState() 
 
 	return self
+end
+
+local function setCharacterMotors(Character, motorTransforms: motorTransforms)
+	local Torso = Character.Torso
+	local HumanoidRootPart = Character.HumanoidRootPart
+
+	HumanoidRootPart.RootJoint.Transform = motorTransforms.RootJoint
+	Torso.Neck.Transform = motorTransforms.Neck
+	Torso["Right Hip"].Transform = motorTransforms.RightHip
+	Torso["Right Shoulder"].Transform = motorTransforms.RightShoulder
+	Torso["Left Hip"].Transform = motorTransforms.LeftHip
+	Torso["Left Shoulder"].Transform = motorTransforms.LeftShoulder
 end
 
 --[[
@@ -145,30 +162,48 @@ function CharacterState:SetToCharacter(Character)
 
 	-- Before entering the pipeline of the next frame, override all of the engine changes with our desired saved state.
 
-	Humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+	local rootCFrameCorrector
+	local transformAndAssemblyCorrector	 
+
+	RunService.PostSimulation:Once(function()
+		AnimatorMethods.ToggleExternalState(false)
+		Humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+
+		rootCFrameCorrector = RunService.PostSimulation:Connect(function()
+			RootPart.CFrame = self.RootCFrame
+		end)
+
+		transformAndAssemblyCorrector = RunService.PreAnimation:Connect(function()
+			setCharacterMotors(Character, self.Motor6DTransforms)-- 
+
+			RootPart.AssemblyLinearVelocity = Vector3.zero
+			RootPart.AssemblyAngularVelocity = Vector3.zero
+		end)
+	end)
 
 	RunService.PostSimulation:Wait()
 
-	RootPart.Anchored = true
-
-	RootPart.AssemblyLinearVelocity = self.RootLinearVelocity
-	RootPart.AssemblyAngularVelocity = self.RootAngularVelocity
-	
-	RootPart.CFrame = self.RootCFrame
-
-	Humanoid:ChangeState(self.HumanoidState)
-
 	task.wait() -- Wait for the deffered animate state connections to fire before playing our animation
+	
+	RunService.PreRender:Once(function()
+		Humanoid:ChangeState(self.HumanoidState)
 
-	RunService.PreRender:Wait()
+		RunService.PreAnimation:Once(function()
+			AnimatorMethods.SetState(self.AnimatorState)
+		end)
 
-	Humanoid:ChangeState(self.HumanoidState)
+		RunService.PreSimulation:Once(function()
+			transformAndAssemblyCorrector:Disconnect()
 
-	RunService.PreAnimation:Wait()
+			RunService.PostSimulation:Wait()
 
-	AnimatorMethods.SetState(self.AnimatorState)
-
-	RootPart.Anchored = false
+			RootPart.AssemblyLinearVelocity = self.RootLinearVelocity
+			RootPart.AssemblyAngularVelocity = self.RootAngularVelocity
+			
+			rootCFrameCorrector:Disconnect()
+			AnimatorMethods.ToggleExternalState(true)
+		end)
+	end)
 end
 
 function CharacterState:Destroy()
