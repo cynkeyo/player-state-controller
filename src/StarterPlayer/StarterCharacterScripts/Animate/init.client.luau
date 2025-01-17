@@ -658,8 +658,6 @@ function setState(animatorState)
 	stopAllAnimationsInstantaneously()
 	stopToolAnimationsInstantaneously()
 
-	print(animatorState.jumpAnimTime)
-
 	playAnimationFromState(animatorState.currentAnimName, animatorState.animFadeTime, Humanoid, animatorState.currentTimePosition, animatorState.animSpeed)
 end
 
@@ -667,7 +665,7 @@ end
 local acceptsExternalState = true
 
 function toggleExternalState(toggle: boolean)
-
+	acceptsExternalState = toggle
 end
 
 Methods.GetCurrentState = getCurrentState
@@ -690,6 +688,8 @@ local function connectionWrapper(signal, handler)
 		if not acceptsExternalState then
 			return 	
 		end
+
+		print("i fired LOL!")
 
 		handler(...)
 	end)

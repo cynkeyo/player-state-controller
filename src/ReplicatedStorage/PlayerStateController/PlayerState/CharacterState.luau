@@ -166,7 +166,12 @@ function CharacterState:SetToCharacter(Character)
 	local transformAndAssemblyCorrector	 
 
 	RunService.PostSimulation:Once(function()
+		print("start setting")
+
+		print(Humanoid:GetState())
+
 		AnimatorMethods.ToggleExternalState(false)
+		print("toggled off external state")
 		Humanoid:ChangeState(Enum.HumanoidStateType.Physics)
 
 		rootCFrameCorrector = RunService.PostSimulation:Connect(function()
@@ -201,7 +206,12 @@ function CharacterState:SetToCharacter(Character)
 			RootPart.AssemblyAngularVelocity = self.RootAngularVelocity
 			
 			rootCFrameCorrector:Disconnect()
-			AnimatorMethods.ToggleExternalState(true)
+
+			print("stop setting")
+
+			RunService.PreAnimation:Once(function()
+				AnimatorMethods.ToggleExternalState(true)
+			end)
 		end)
 	end)
 end
