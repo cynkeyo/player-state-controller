@@ -7,6 +7,14 @@
     "ReplicatedStorage":{
       "$className": "ReplicatedStorage",
       "$path": "src/ReplicatedStorage"
+    },
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "$path": "src/StarterPlayer",
+      "StarterCharacterScripts": {
+        "$className": "StarterCharacterScripts",
+        "$path": "src/StarterPlayer/StarterCharacterScripts"
+      }
     }
   }
 }

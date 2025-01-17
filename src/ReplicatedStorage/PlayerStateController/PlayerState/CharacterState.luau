@@ -1,23 +1,30 @@
 --!native
 --!optimize 2
---!strict
 
-type animationState = {
-	looped: boolean,
-	priority: Enum.AnimationPriority,
-	speed: number,
-	timePosition: number,
-	targetWeight: number,
-	animationObject: Animation,
+local RunService = game:GetService("RunService")
+
+type AnimatorMethods = {
+    IsExposed: () -> boolean,
+    SetState: (animatorState) -> (),
+    GetCurrentState: () -> (animatorState),
+    __exposed: boolean
 }
 
 type animatorState = {
-	playingAnimationStates: { animationState },
+    currentPose: string,
+    currentAnimName: string,
+    currentTimePosition: number,
+    animFadeTime: number,
+    animSpeed: number,
 }
 
-type humanoidState = {
-	stateType: Enum.HumanoidStateType,
-	animatorState: animatorState,
+type motorTransforms = {
+	RootJoint: CFrame,
+	Neck: CFrame,
+	LeftShoulder: CFrame,
+	LeftHip: CFrame,
+	RightShoulder: CFrame,
+	RightHip: CFrame
 }
 
 type ICharacterState = {
@@ -33,7 +40,9 @@ export type CharacterState = typeof(setmetatable(
 		RootCFrame: CFrame,
 		RootLinearVelocity: Vector3,
 		RootAngularVelocity: Vector3,
-		HumanoidState: humanoidState,
+		HumanoidState: Enum.HumanoidStateType,
+		AnimatorState: animatorState,
+		Motor6DTransforms: motorTransforms
 	},
 	{} :: ICharacterState
 ))
@@ -41,163 +50,125 @@ export type CharacterState = typeof(setmetatable(
 local CharacterState: ICharacterState = {} :: ICharacterState
 CharacterState.__index = CharacterState
 
-local function createAnimationState()
+local function createMotorTransforms(): motorTransforms
 	return {
-		looped = false,
-		priority = Enum.AnimationPriority.Idle,
-		speed = 1,
-		timePosition = 0,
-		targetWeight = 0,
-		animationObject = Instance.new("Animation"),
+		RootJoint = CFrame.new(),
+		Neck = CFrame.new(),
+		RightHip = CFrame.new(),
+		RightShoulder = CFrame.new(),
+		LeftHip = CFrame.new(),
+		LeftShoulder = CFrame.new()
 	}
 end
 
-local function createAnimatorState()
-	return {
-		playingAnimationStates = {},
-	}
-end
-
-local function createHumanoidState()
-	return {
-		stateType = Enum.HumanoidStateType.None,
-		animatorState = createAnimatorState(),
-	}
-end
-
-function CharacterState.new()
+function CharacterState.new(): CharacterState
 	local self = setmetatable({}, CharacterState)
 
 	self.RootCFrame = CFrame.new()
 	self.RootLinearVelocity = Vector3.new()
 	self.RootAngularVelocity = Vector3.new()
-	self.HumanoidState = createHumanoidState()
+	self.HumanoidState = Enum.HumanoidStateType.None
+	self.Motor6DTransforms = createMotorTransforms()
+	self.AnimatorState = {
+		currentPose = "Standing",
+		currentAnimName = "idle",
+		currentTimePosition = 0,
+		animFadeTime = 0.1,
+		animSpeed = 1
+	}
 
 	return self
 end
 
--- holy boilerplate lol
-local function getCharacterComponents(Character: Model): (Humanoid, BasePart, Animator)
-	if not Character:IsA("Model") then
-		error("The passed character isn't of type Model.")
-	end
-
-	local Humanoid: Instance? = Character:FindFirstChild("Humanoid")
+local function getCharacterComponents(Character): (Humanoid, BasePart, LocalScript) 
+	local Humanoid = Character:FindFirstChild("Humanoid")
 
 	if not Humanoid then
-		error("The passed Character doesn't have a Humanoid")
+		error("Couldn't find a Humanoid for the provided character.")
 	end
 
-	if not Humanoid:IsA("Humanoid") then
-		error("Found a Humanoid instance, but isn't of type Humanoid.")
-	end
+	local Animator = Character:FindFirstChild("Animate")
 
-	local RootPart = Humanoid.RootPart
-
-	if not RootPart then
-		error("Character doesn't have a root part.")
-	end
-
-	local Animator: Instance? = Humanoid:FindFirstChild("Animator")
-
-	if not Animator then
-		error("Humanoid doesn't have an animator")
-	end
-
-	if not Animator:IsA("Animator") then
-		error("Found an Animator, but isn't of type Animator.")
-	end
-
-	return Humanoid, RootPart, Animator
+	return Humanoid, Humanoid.RootPart, Animator 
 end
 
-local function createAnimatorStateFromAnimator(Animator: Animator)
-	if not Animator then
-		error("Expected a Animator instance, got nil.")
-	end
+-- These will be the parts that will have their body state saved.
+local RIG_PARTS = {
+	HumanoidRootPart = "HumanoidRootPart",
+	Torso = "Torso",
+	LeftLeg = "Left Leg",
+	LeftArm = "Left Arm",
+	RightLeg = "Right Leg",
+	RightArm = "Right Arm",
+	Head = "Right Arm"
+}
 
-	local animatorState = createAnimatorState()
-	local playingAnimationStates = animatorState.playingAnimationStates
+local function getMotorTransformsFromCharacter(Character): motorTransforms
+	local Torso = Character.Torso
+	local HumanoidRootPart = Character.HumanoidRootPart
 
-	for _, AnimationTrack in pairs(Animator:GetPlayingAnimationTracks()) do
-		local animationState = createAnimationState()
-
-		animationState.targetWeight = AnimationTrack.WeightTarget
-		animationState.looped = AnimationTrack.Looped
-		animationState.priority = AnimationTrack.Priority
-		animationState.speed = AnimationTrack.Speed
-		animationState.timePosition = AnimationTrack.Speed
-		animationState.animationObject = AnimationTrack.Animation:Clone() -- Mutation of the original object will also change this animation if it isn't cloned
-
-		table.insert(playingAnimationStates, animationState)
-	end
-
-	return animatorState
+	return {
+		RootJoint = HumanoidRootPart.RootJoint.Transform,
+		Neck = Torso.Neck.Transform,
+		RightHip = Torso["Right Hip"].Transform,
+		RightShoulder = Torso["Right Shoulder"].Transform,
+		LeftHip = Torso["Left Hip"].Transform,
+		LeftShoulder = Torso["Left Shoulder"].Transform
+	}
 end
 
 function CharacterState.fromCharacter(Character)
 	local Humanoid, RootPart, Animator = getCharacterComponents(Character)
 
-	local self = CharacterState.new()
+	local AnimatorMethods: AnimatorMethods = require(Animator.Methods)
 
-	local animatorState = createAnimatorStateFromAnimator(Animator)
-
-	local humanoidState = createHumanoidState()
-	humanoidState.stateType = Humanoid:GetState()
-	humanoidState.animatorState = animatorState
+	local self = setmetatable({}, CharacterState)
 
 	self.RootCFrame = RootPart.CFrame
 	self.RootLinearVelocity = RootPart.AssemblyLinearVelocity
 	self.RootAngularVelocity = RootPart.AssemblyAngularVelocity
-	self.HumanoidState = humanoidState
+	self.HumanoidState = Humanoid:GetState()
+	self.AnimatorState = AnimatorMethods.GetCurrentState() 
 
 	return self
 end
 
-local function clearAnimatorAnimations(Animator: Animator)
-	if not Animator then
-		error("Expected a Animator instance, got nil.")
-	end
-
-	for _, AnimationTrack in pairs(Animator:GetPlayingAnimationTracks()) do
-		AnimationTrack:Stop(0)
-	end
-end
-
-local function playAnimationsFromAnimatorState(Animator: Animator, animatorState: animatorState)
-	if not Animator then
-		error("Expected a Animator instance, got nil.")
-	end
-
-	if not animatorState then
-		error("Expected an animator state object, got nil.")
-	end
-
-	local playingAnimationStates = animatorState.playingAnimationStates
-
-	for _, animationState in pairs(playingAnimationStates) do
-		local animationTrack = Animator:LoadAnimation(animationState.animationObject)
-
-		animationTrack:Play(0, animationState.targetWeight, animationState.speed)
-		animationTrack.TimePosition = animationState.timePosition
-	end
-end
-
+--[[
+	Sets the passed character model to match the CharacterState instance.
+	
+	Please note that this doesn't happen immediately due to the need of altering state in a ordered way based in the frame pipeline.
+]]
 function CharacterState:SetToCharacter(Character)
 	local Humanoid, RootPart, Animator = getCharacterComponents(Character)
 
-	local humanoidState = self.HumanoidState
-	local animatorState = humanoidState.animatorState
+	local AnimatorMethods: AnimatorMethods = require(Animator.Methods)
 
-	clearAnimatorAnimations(Animator)
+	-- Before entering the pipeline of the next frame, override all of the engine changes with our desired saved state.
 
-	RootPart.CFrame = self.RootCFrame
+	Humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+
+	RunService.PostSimulation:Wait()
+
+	RootPart.Anchored = true
+
 	RootPart.AssemblyLinearVelocity = self.RootLinearVelocity
 	RootPart.AssemblyAngularVelocity = self.RootAngularVelocity
+	
+	RootPart.CFrame = self.RootCFrame
 
-	playAnimationsFromAnimatorState(Animator, animatorState)
+	Humanoid:ChangeState(self.HumanoidState)
 
-	Humanoid:ChangeState(humanoidState.stateType)
+	task.wait() -- Wait for the deffered animate state connections to fire before playing our animation
+
+	RunService.PreRender:Wait()
+
+	Humanoid:ChangeState(self.HumanoidState)
+
+	RunService.PreAnimation:Wait()
+
+	AnimatorMethods.SetState(self.AnimatorState)
+
+	RootPart.Anchored = false
 end
 
 function CharacterState:Destroy()
