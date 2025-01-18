@@ -162,64 +162,33 @@ function CharacterState:SetToCharacter(Character)
 
 	-- Before entering the pipeline of the next frame, override all of the engine changes with our desired saved state.
 
-	local rootCFrameCorrector
-	local transformAndAssemblyCorrector	 
-
-	RunService.PostSimulation:Once(function()
-		print("start setting")
-
-		print(Humanoid:GetState())
-
-		AnimatorMethods.ToggleExternalState(false)
-		print("toggled off external state")
-		Humanoid:ChangeState(Enum.HumanoidStateType.Physics)
-
-		rootCFrameCorrector = RunService.PostSimulation:Connect(function()
-			RootPart.CFrame = self.RootCFrame
-		end)
-
-		transformAndAssemblyCorrector = RunService.PreAnimation:Connect(function()
-			setCharacterMotors(Character, self.Motor6DTransforms)-- 
-
-			RootPart.AssemblyLinearVelocity = Vector3.zero
-			RootPart.AssemblyAngularVelocity = Vector3.zero
-		end)
-	end)
-
-	RunService.PostSimulation:Wait()
-
-	task.wait() -- Wait for the deffered animate state connections to fire before playing our animation
-	
 	RunService.PreRender:Once(function()
+		AnimatorMethods.ToggleExternalState(false)
+
+		RootPart.CFrame = self.RootCFrame
+
+		setCharacterMotors(Character, self.Motor6DTransforms)-- 
+
+		RootPart.AssemblyLinearVelocity = Vector3.zero
+		RootPart.AssemblyAngularVelocity = Vector3.zero
+
 		Humanoid:ChangeState(self.HumanoidState)
 
-		RunService.PreAnimation:Once(function()
-			AnimatorMethods.SetState(self.AnimatorState)
-		end)
+		AnimatorMethods.SetState(self.AnimatorState)
+		
+		RootPart.AssemblyLinearVelocity = self.RootLinearVelocity
+		RootPart.AssemblyAngularVelocity = self.RootAngularVelocity
 
-		RunService.PreSimulation:Once(function()
-			transformAndAssemblyCorrector:Disconnect()
+		RunService.PreRender:Wait()
 
-			RunService.PostSimulation:Wait()
-
-			RootPart.AssemblyLinearVelocity = self.RootLinearVelocity
-			RootPart.AssemblyAngularVelocity = self.RootAngularVelocity
-			
-			rootCFrameCorrector:Disconnect()
-
-			print("stop setting")
-
-			RunService.PreAnimation:Once(function()
-				AnimatorMethods.ToggleExternalState(true)
-			end)
-		end)
+		AnimatorMethods.ToggleExternalState(true)
 	end)
 end
 
 function CharacterState:Destroy()
-	table.freeze(self)
 	table.clear(self)
 	setmetatable(self, nil)
+	table.freeze(self)
 end
 
 return CharacterState
