@@ -4,20 +4,20 @@
 local RunService = game:GetService("RunService")
 
 type AnimatorMethods = {
-    ToggleExternalState: (boolean) -> (),
-    IsExposed: () -> boolean,
-    SetState: (animatorState) -> (),
-    GetCurrentState: () -> (animatorState),
-    __exposed: boolean
+	ToggleExternalState: (boolean) -> (),
+	IsExposed: () -> boolean,
+	SetState: (animatorState) -> (),
+	GetCurrentState: () -> animatorState,
+	__exposed: boolean,
 }
 
 export type animatorState = {
-    currentPose: string,
-    currentAnimName: string,
-    currentTimePosition: number,
-    animFadeTime: number,
-    animSpeed: number,
-    jumpAnimTime: number
+	currentPose: string,
+	currentAnimName: string,
+	currentTimePosition: number,
+	animFadeTime: number,
+	animSpeed: number,
+	jumpAnimTime: number,
 }
 
 type motorTransforms = {
@@ -26,7 +26,7 @@ type motorTransforms = {
 	LeftShoulder: CFrame,
 	LeftHip: CFrame,
 	RightShoulder: CFrame,
-	RightHip: CFrame
+	RightHip: CFrame,
 }
 
 type ICharacterState = {
@@ -44,12 +44,12 @@ export type CharacterState = typeof(setmetatable(
 		RootAngularVelocity: Vector3,
 		HumanoidState: Enum.HumanoidStateType,
 		AnimatorState: animatorState,
-		Motor6DTransforms: motorTransforms
+		Motor6DTransforms: motorTransforms,
 	},
 	{} :: ICharacterState
 ))
 
-local CharacterState: ICharacterState = {} :: ICharacterState
+local CharacterState = {}
 CharacterState.__index = CharacterState
 
 local function createMotorTransforms(): motorTransforms
@@ -59,10 +59,15 @@ local function createMotorTransforms(): motorTransforms
 		RightHip = CFrame.new(),
 		RightShoulder = CFrame.new(),
 		LeftHip = CFrame.new(),
-		LeftShoulder = CFrame.new()
+		LeftShoulder = CFrame.new(),
 	}
 end
 
+--[[
+	@return @CharacterState CharacterState
+
+	Creates a new blank CharacterState
+]]
 function CharacterState.new(): CharacterState
 	local self = setmetatable({}, CharacterState)
 
@@ -76,13 +81,13 @@ function CharacterState.new(): CharacterState
 		currentAnimName = "idle",
 		currentTimePosition = 0,
 		animFadeTime = 0.1,
-		animSpeed = 1
+		animSpeed = 1,
 	}
 
 	return self
 end
 
-local function getCharacterComponents(Character): (Humanoid, BasePart, LocalScript) 
+local function getCharacterComponents(Character): (Humanoid, BasePart, LocalScript)
 	local Humanoid = Character:FindFirstChild("Humanoid")
 
 	if not Humanoid then
@@ -91,7 +96,7 @@ local function getCharacterComponents(Character): (Humanoid, BasePart, LocalScri
 
 	local Animator = Character:FindFirstChild("Animate")
 
-	return Humanoid, Humanoid.RootPart, Animator 
+	return Humanoid, Humanoid.RootPart, Animator
 end
 
 -- These will be the parts that will have their body state saved.
@@ -102,7 +107,7 @@ local RIG_PARTS = {
 	LeftArm = "Left Arm",
 	RightLeg = "Right Leg",
 	RightArm = "Right Arm",
-	Head = "Right Arm"
+	Head = "Right Arm",
 }
 
 local function getMotorTransformsFromCharacter(Character): motorTransforms
@@ -115,17 +120,26 @@ local function getMotorTransformsFromCharacter(Character): motorTransforms
 		RightHip = Torso["Right Hip"].Transform,
 		RightShoulder = Torso["Right Shoulder"].Transform,
 		LeftHip = Torso["Left Hip"].Transform,
-		LeftShoulder = Torso["Left Shoulder"].Transform
+		LeftShoulder = Torso["Left Shoulder"].Transform,
 	}
 end
+--[[
+	@param Model Character
+	@return CharacterState CharacterState
 
+	Creates a new CharacterState from the @param Character.
+
+	The @param Character must be a R6 rig with a custom Animate script and a Humanoid.
+
+	Custom animate script found at https://github.com/cynkeyo/player-state-controller.
+]]
 function CharacterState.fromCharacter(Character)
 	local Humanoid, RootPart, Animator = getCharacterComponents(Character)
 
 	local AnimatorMethods: AnimatorMethods = require(Animator.Methods)
 
 	local self = setmetatable({}, CharacterState)
-	
+
 	RunService.PostSimulation:Wait()
 
 	self.Motor6DTransforms = getMotorTransformsFromCharacter(Character)
@@ -133,7 +147,7 @@ function CharacterState.fromCharacter(Character)
 	self.RootLinearVelocity = RootPart.AssemblyLinearVelocity
 	self.RootAngularVelocity = RootPart.AssemblyAngularVelocity
 	self.HumanoidState = Humanoid:GetState()
-	self.AnimatorState = AnimatorMethods.GetCurrentState() 
+	self.AnimatorState = AnimatorMethods.GetCurrentState()
 
 	return self
 end
@@ -160,7 +174,9 @@ function CharacterState:SetToCharacter(Character)
 
 	local AnimatorMethods: AnimatorMethods = require(Animator.Methods)
 
-	-- Before entering the pipeline of the next frame, override all of the engine changes with our desired saved state.
+	-- As we enter the next frame, override all of the engine changes with our desired saved state.
+	-- This has to be deffered to the next PreRender call since otherwise we can't ensure a consistent entry point
+	-- A consistent entry point is needed to set character state accurately.
 
 	RunService.PreRender:Once(function()
 		AnimatorMethods.ToggleExternalState(false)
@@ -173,8 +189,10 @@ function CharacterState:SetToCharacter(Character)
 		RootPart.AssemblyAngularVelocity = self.RootAngularVelocity
 
 		Humanoid:ChangeState(self.HumanoidState)
-		
+
 		AnimatorMethods.SetState(self.AnimatorState)
+
+		-- This wait is needed since otherwise deffered connections will fire, playing unwanted animations.
 
 		RunService.PreRender:Wait()
 
@@ -182,6 +200,9 @@ function CharacterState:SetToCharacter(Character)
 	end)
 end
 
+--[[
+	Destroys the CharacterState instance.
+]]
 function CharacterState:Destroy()
 	table.clear(self)
 	setmetatable(self, nil)

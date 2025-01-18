@@ -2,7 +2,6 @@
   "name": "player-state-controller",
   "tree": {
     "$className": "DataModel",
-    "$path": "src",
 
     "ReplicatedStorage":{
       "$className": "ReplicatedStorage",
@@ -10,7 +9,6 @@
     },
     "StarterPlayer": {
       "$className": "StarterPlayer",
-      "$path": "src/StarterPlayer",
       "StarterCharacterScripts": {
         "$className": "StarterCharacterScripts",
         "$path": "src/StarterPlayer/StarterCharacterScripts"
