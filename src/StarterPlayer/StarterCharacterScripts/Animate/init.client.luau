@@ -647,6 +647,16 @@ function stopToolAnimationsInstantaneously()
 	return oldAnim
 end
 
+local function cancelAllAnimations()
+	--since we cant stop animations instantly we set their weight to zero, removing their effect on the motors.
+	local animator = Humanoid:FindFirstChildOfClass("Animator")
+
+	for _, animTrack in pairs(animator:GetPlayingAnimationTracks()) do
+		print(animTrack)
+		animTrack:AdjustWeight(0, 0)
+	end
+end
+
 function setState(animatorState)
 	if not animatorState then
 		error("Expected a animatorState, got nil.")
@@ -657,6 +667,7 @@ function setState(animatorState)
 
 	stopAllAnimationsInstantaneously()
 	stopToolAnimationsInstantaneously()
+	cancelAllAnimations()
 
 	playAnimationFromState(animatorState.currentAnimName, animatorState.animFadeTime, Humanoid, animatorState.currentTimePosition, animatorState.animSpeed)
 end

@@ -167,17 +167,14 @@ function CharacterState:SetToCharacter(Character)
 
 		RootPart.CFrame = self.RootCFrame
 
-		setCharacterMotors(Character, self.Motor6DTransforms)-- 
+		setCharacterMotors(Character, self.Motor6DTransforms)
 
-		RootPart.AssemblyLinearVelocity = Vector3.zero
-		RootPart.AssemblyAngularVelocity = Vector3.zero
-
-		Humanoid:ChangeState(self.HumanoidState)
-
-		AnimatorMethods.SetState(self.AnimatorState)
-		
 		RootPart.AssemblyLinearVelocity = self.RootLinearVelocity
 		RootPart.AssemblyAngularVelocity = self.RootAngularVelocity
+
+		Humanoid:ChangeState(self.HumanoidState)
+		
+		AnimatorMethods.SetState(self.AnimatorState)
 
 		RunService.PreRender:Wait()
 
