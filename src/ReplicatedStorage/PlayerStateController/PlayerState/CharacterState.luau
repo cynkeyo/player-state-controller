@@ -123,9 +123,10 @@ local function getMotorTransformsFromCharacter(Character): motorTransforms
 		LeftShoulder = Torso["Left Shoulder"].Transform,
 	}
 end
+
 --[[
-	@param Model Character
-	@return CharacterState CharacterState
+	@param @Model Character
+	@return @CharacterState CharacterState
 
 	Creates a new CharacterState from the @param Character.
 
@@ -165,9 +166,13 @@ local function setCharacterMotors(Character, motorTransforms: motorTransforms)
 end
 
 --[[
-	Sets the passed character model to match the CharacterState instance.
-	
-	Please note that this doesn't happen immediately due to the need of altering state in a ordered way based in the frame pipeline.
+	@param @Model Character
+
+	Sets the @param Character state to match the CharacterState instance.
+
+	This process is deffered to the next PreRender call.
+
+	The @param Character must be a R6 rig with a custom Animate script and a Humanoid.
 ]]
 function CharacterState:SetToCharacter(Character)
 	local Humanoid, RootPart, Animator = getCharacterComponents(Character)
