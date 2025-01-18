@@ -652,7 +652,6 @@ local function cancelAllAnimations()
 	local animator = Humanoid:FindFirstChildOfClass("Animator")
 
 	for _, animTrack in pairs(animator:GetPlayingAnimationTracks()) do
-		print(animTrack)
 		animTrack:AdjustWeight(0, 0)
 	end
 end
@@ -699,8 +698,6 @@ local function connectionWrapper(signal, handler)
 		if not acceptsExternalState then
 			return 	
 		end
-
-		print("i fired LOL!")
 
 		handler(...)
 	end)
