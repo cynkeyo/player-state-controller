@@ -3,18 +3,38 @@
 
 local RunService = game:GetService("RunService")
 
+type AbstractCameraController = {
+    SetCameraToSubjectDistance: (self: any, desiredSubjectDistance: number) -> (),
+    GetCameraToSubjectDistance: (self: any) -> number
+}
+
+type AbstractMouseLockController = {
+    GetIsMouseLocked: (self: any) -> boolean,
+    DoMouseLockSwitch: (self: any, name: any, state: Enum.UserInputState) -> ()
+}
+
+type AbstractCameraModule = {
+    activeCameraController: AbstractCameraController,
+    activeMouseLockController: AbstractMouseLockController
+}
+
+type AbstractPlayerModule = {
+    GetCameras: (self: any) -> AbstractCameraModule 
+}
+
 type ICameraState = {
     __index: ICameraState,
     new: () -> CameraState,
-    fromCamera: (Camera) -> CameraState,
-    SetToCamera: (self: CameraState, Camera) -> (),
+    fromPlayer: (Player) -> CameraState,
+    SetToPlayer: (self: CameraState, Player) -> (),
     Destroy: (self: CameraState) -> ()
 }
 
 export type CameraState = typeof(setmetatable(
     {} :: {
         CFrame: CFrame,
-        CameraType: Enum.CameraType
+        SubjectDistance: number,
+        MouseLocked: boolean
     },
     {} :: ICameraState
 ))
@@ -31,10 +51,17 @@ function CameraState.new(): CameraState
     local self = setmetatable({}, CameraState)
 
     self.CFrame = CFrame.new()
-    self.CameraType = Enum.CameraType.Custom
+    self.SubjectDistance = 10
+    self.MouseLocked = false
 
     return self
 end 
+
+local function getCameraModuleFromPlayer(Player: Player): AbstractCameraModule 
+    local SingletonPlayerModule: AbstractPlayerModule = require(Player.PlayerScripts:FindFirstChild("PlayerModule"))
+
+    return SingletonPlayerModule:GetCameras() 
+end
 
 --[[
 	@param @Camera Camera
@@ -42,11 +69,17 @@ end
 
 	Creates a new CharacterState from the @param Camera.
 ]]
-function CameraState.fromCamera(Camera: Camera): CameraState
+function CameraState.fromPlayer(Player: Player): CameraState
     local self = setmetatable({}, CameraState)
     
-    self.CFrame = Camera.CFrame
-    self.CameraType = Camera.CameraType
+    local CameraModule = getCameraModuleFromPlayer(Player)
+
+    local CameraController = CameraModule.activeCameraController
+    local MouseLockController = CameraModule.activeMouseLockController
+
+    self.CFrame = workspace.CurrentCamera.CFrame
+    self.SubjectDistance = CameraController:GetCameraToSubjectDistance()
+    self.MouseLocked = MouseLockController:GetIsMouseLocked()
 
     return self
 end
@@ -58,11 +91,20 @@ local SET_CFRAME_BIND = "CAMERA_STATE_SET_CFRAME"
 
 	Sets the @param Camera state to match the CameraState instance.
 ]]
-function CameraState:SetToCamera(Camera: Camera)
+function CameraState:SetToPlayer(Player: Player)
+    local Camera = workspace.CurrentCamera
 
-    -- Set the camera CFrame to the desired state before the frame gets drawed.
+    local CameraModule = getCameraModuleFromPlayer(Player)
+
+    local CameraController = CameraModule.activeCameraController
+    local MouseLockController = CameraModule.activeMouseLockController
 
     Camera.CFrame = self.CFrame
+    CameraController:SetCameraToSubjectDistance(self.SubjectDistance)
+    
+    if MouseLockController:GetIsMouseLocked() ~= self.MouseLocked then
+        MouseLockController:DoMouseLockSwitch(nil, Enum.UserInputState.Begin)
+    end
 end
 
 --[[
