@@ -140,7 +140,7 @@ function CharacterState.fromCharacter(Character)
 	local AnimatorMethods: AnimatorMethods = require(Animator.Methods)
 
 	local self = setmetatable({}, CharacterState)
-
+	
 	RunService.PostSimulation:Wait()
 
 	self.Motor6DTransforms = getMotorTransformsFromCharacter(Character)

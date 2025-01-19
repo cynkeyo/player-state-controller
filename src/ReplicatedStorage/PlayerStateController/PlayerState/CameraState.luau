@@ -4,7 +4,7 @@
 local RunService = game:GetService("RunService")
 
 type AbstractCameraController = {
-    SetCameraToSubjectDistance: (self: any, desiredSubjectDistance: number) -> (),
+    SetCameraToSubjectDistance: (self: any, desiredSubjectDistance: number, instant: boolean?) -> (),
     GetCameraToSubjectDistance: (self: any) -> number
 }
 
@@ -77,14 +77,14 @@ function CameraState.fromPlayer(Player: Player): CameraState
     local CameraController = CameraModule.activeCameraController
     local MouseLockController = CameraModule.activeMouseLockController
 
+    RunService.PostSimulation:Wait()
+
     self.CFrame = workspace.CurrentCamera.CFrame
     self.SubjectDistance = CameraController:GetCameraToSubjectDistance()
     self.MouseLocked = MouseLockController:GetIsMouseLocked()
 
     return self
 end
-
-local SET_CFRAME_BIND = "CAMERA_STATE_SET_CFRAME"
 
 --[[
 	@param @Camera Camera
@@ -99,12 +99,14 @@ function CameraState:SetToPlayer(Player: Player)
     local CameraController = CameraModule.activeCameraController
     local MouseLockController = CameraModule.activeMouseLockController
 
-    Camera.CFrame = self.CFrame
-    CameraController:SetCameraToSubjectDistance(self.SubjectDistance)
-    
-    if MouseLockController:GetIsMouseLocked() ~= self.MouseLocked then
-        MouseLockController:DoMouseLockSwitch(nil, Enum.UserInputState.Begin)
-    end
+    RunService.PreRender:Once(function()
+        Camera.CFrame = self.CFrame
+        CameraController:SetCameraToSubjectDistance(self.SubjectDistance, true)
+        
+        if MouseLockController:GetIsMouseLocked() ~= self.MouseLocked then
+            MouseLockController:DoMouseLockSwitch(nil, Enum.UserInputState.Begin)
+        end
+    end)
 end
 
 --[[

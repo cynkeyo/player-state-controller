@@ -1186,7 +1186,7 @@ function BaseCamera:UpdateForDistancePropertyChange()
 	self:SetCameraToSubjectDistance(self.currentSubjectDistance)
 end
 
-function BaseCamera:SetCameraToSubjectDistance(desiredSubjectDistance)
+function BaseCamera:SetCameraToSubjectDistance(desiredSubjectDistance, instant)
 	local player = Players.LocalPlayer
 
 	local lastSubjectDistance = self.currentSubjectDistance
@@ -1215,8 +1215,10 @@ function BaseCamera:SetCameraToSubjectDistance(desiredSubjectDistance)
 		end
 	end
 
+	instant = instant and true or false
+
 	-- Pass target distance and zoom direction to the zoom controller
-	ZoomController.SetZoomParameters(self.currentSubjectDistance, math.sign(desiredSubjectDistance - lastSubjectDistance))
+	ZoomController.SetZoomParameters(self.currentSubjectDistance, math.sign(desiredSubjectDistance - lastSubjectDistance), instant)
 
 	-- Returned only for convenience to the caller to know the outcome
 	return self.currentSubjectDistance
