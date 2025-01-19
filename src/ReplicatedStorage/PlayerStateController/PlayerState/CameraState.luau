@@ -26,7 +26,7 @@ type ICameraState = {
     __index: ICameraState,
     new: () -> CameraState,
     fromPlayer: (Player) -> CameraState,
-    SetToPlayer: (self: CameraState, Player) -> (),
+    SetToPlayer: (self: CameraState, Player: Player, setZoom: boolean, setMouseLock: boolean) -> (),
     Destroy: (self: CameraState) -> ()
 }
 
@@ -78,6 +78,7 @@ function CameraState.fromPlayer(Player: Player): CameraState
     local MouseLockController = CameraModule.activeMouseLockController
 
     self.CFrame = workspace.CurrentCamera.CFrame
+
     self.SubjectDistance = CameraController:GetCameraToSubjectDistance()
     self.MouseLocked = MouseLockController:GetIsMouseLocked()
 
@@ -89,7 +90,10 @@ end
 
 	Sets the @param Camera state to match the CameraState instance.
 ]]
-function CameraState:SetToPlayer(Player: Player)
+function CameraState:SetToPlayer(Player: Player, setZoom: boolean?, setMouseLock: boolean?)
+    setZoom = setZoom ~= nil and setZoom or true
+    setMouseLock = setMouseLock ~= nil and setMouseLock or true
+
     local Camera = workspace.CurrentCamera
 
     local CameraModule = getCameraModuleFromPlayer(Player)
@@ -98,10 +102,15 @@ function CameraState:SetToPlayer(Player: Player)
     local MouseLockController = CameraModule.activeMouseLockController
 
     Camera.CFrame = self.CFrame
-    CameraController:SetCameraToSubjectDistance(self.SubjectDistance, true)
+
+    if setMouseLock then
+        CameraController:SetCameraToSubjectDistance(self.SubjectDistance, true)
+    end
     
-    if MouseLockController:GetIsMouseLocked() ~= self.MouseLocked then
-        MouseLockController:DoMouseLockSwitch(nil, Enum.UserInputState.Begin)
+    if setMouseLock then
+        if MouseLockController:GetIsMouseLocked() ~= self.MouseLocked then
+            MouseLockController:DoMouseLockSwitch(nil, Enum.UserInputState.Begin)
+        end
     end
 end
 

@@ -52,10 +52,11 @@ function PlayerState.fromPlayer(Player: Player, Character: Model): PlayerState
     local self = setmetatable({}, PlayerState)
 
     -- Gets the state of the camera at the end of the render pipeline.
+
     RunService.PostSimulation:Wait()
     
-    self.CharacterState = CharacterState.fromCharacter(Character) 
     self.CameraState = CameraState.fromPlayer(Player)
+    self.CharacterState = CharacterState.fromCharacter(Character) 
 
     return self
 end
@@ -73,9 +74,10 @@ end
 function PlayerState:SetToPlayer(Player: Player, Character: Model)
 
     -- Sets the state at the beginning of the frame.
+        self.CameraState:SetToPlayer(Player)
+
     RunService.PreRender:Once(function()
         self.CharacterState:SetToCharacter(Character)
-        self.CameraState:SetToPlayer(Player)
     end)
 end
 
