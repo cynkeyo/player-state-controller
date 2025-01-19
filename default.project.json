@@ -8,10 +8,17 @@
       "$path": "src/ReplicatedStorage"
     },
     "StarterPlayer": {
+      "$ignoreUnknownInstances": true,
       "$className": "StarterPlayer",
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "$path": "src/StarterPlayer/StarterPlayerScripts",
+        "$ignoreUnknownInstances": true
+      },
       "StarterCharacterScripts": {
         "$className": "StarterCharacterScripts",
-        "$path": "src/StarterPlayer/StarterCharacterScripts"
+        "$path": "src/StarterPlayer/StarterCharacterScripts",
+        "$ignoreUnknownInstances": true
       }
     }
   }
