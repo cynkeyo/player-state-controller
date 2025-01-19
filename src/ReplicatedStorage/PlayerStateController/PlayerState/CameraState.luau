@@ -77,8 +77,6 @@ function CameraState.fromPlayer(Player: Player): CameraState
     local CameraController = CameraModule.activeCameraController
     local MouseLockController = CameraModule.activeMouseLockController
 
-    RunService.PostSimulation:Wait()
-
     self.CFrame = workspace.CurrentCamera.CFrame
     self.SubjectDistance = CameraController:GetCameraToSubjectDistance()
     self.MouseLocked = MouseLockController:GetIsMouseLocked()
@@ -99,14 +97,12 @@ function CameraState:SetToPlayer(Player: Player)
     local CameraController = CameraModule.activeCameraController
     local MouseLockController = CameraModule.activeMouseLockController
 
-    RunService.PreRender:Once(function()
-        Camera.CFrame = self.CFrame
-        CameraController:SetCameraToSubjectDistance(self.SubjectDistance, true)
-        
-        if MouseLockController:GetIsMouseLocked() ~= self.MouseLocked then
-            MouseLockController:DoMouseLockSwitch(nil, Enum.UserInputState.Begin)
-        end
-    end)
+    Camera.CFrame = self.CFrame
+    CameraController:SetCameraToSubjectDistance(self.SubjectDistance, true)
+    
+    if MouseLockController:GetIsMouseLocked() ~= self.MouseLocked then
+        MouseLockController:DoMouseLockSwitch(nil, Enum.UserInputState.Begin)
+    end
 end
 
 --[[

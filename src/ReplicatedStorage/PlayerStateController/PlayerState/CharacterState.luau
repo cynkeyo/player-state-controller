@@ -130,6 +130,8 @@ end
 
 	Creates a new CharacterState from the @param Character.
 
+	Must be called in the PostSimulation step of the render pipeline.
+
 	The @param Character must be a R6 rig with a custom Animate script and a Humanoid.
 
 	Custom animate script found at https://github.com/cynkeyo/player-state-controller.
@@ -140,8 +142,6 @@ function CharacterState.fromCharacter(Character)
 	local AnimatorMethods: AnimatorMethods = require(Animator.Methods)
 
 	local self = setmetatable({}, CharacterState)
-	
-	RunService.PostSimulation:Wait()
 
 	self.Motor6DTransforms = getMotorTransformsFromCharacter(Character)
 	self.RootCFrame = RootPart.CFrame
@@ -170,7 +170,7 @@ end
 
 	Sets the @param Character state to match the CharacterState instance.
 
-	This process is deffered to the next PreRender call.
+	Must be called in the PreRender step of the render pipeline for consistent behavior.
 
 	The @param Character must be a R6 rig with a custom Animate script and a Humanoid.
 ]]
@@ -183,26 +183,24 @@ function CharacterState:SetToCharacter(Character)
 	-- This has to be deffered to the next PreRender call since otherwise we can't ensure a consistent entry point
 	-- A consistent entry point is needed to set character state accurately.
 
-	RunService.PreRender:Once(function()
-		AnimatorMethods.ToggleExternalState(false)
+	AnimatorMethods.ToggleExternalState(false)
 
-		RootPart.CFrame = self.RootCFrame
+	RootPart.CFrame = self.RootCFrame
 
-		setCharacterMotors(Character, self.Motor6DTransforms)
+	setCharacterMotors(Character, self.Motor6DTransforms)
 
-		RootPart.AssemblyLinearVelocity = self.RootLinearVelocity
-		RootPart.AssemblyAngularVelocity = self.RootAngularVelocity
+	RootPart.AssemblyLinearVelocity = self.RootLinearVelocity
+	RootPart.AssemblyAngularVelocity = self.RootAngularVelocity
 
-		Humanoid:ChangeState(self.HumanoidState)
+	Humanoid:ChangeState(self.HumanoidState)
 
-		AnimatorMethods.SetState(self.AnimatorState)
+	AnimatorMethods.SetState(self.AnimatorState)
 
-		-- This wait is needed since otherwise deffered connections will fire, playing unwanted animations.
+	-- This wait is needed since otherwise deffered connections will fire, playing unwanted animations.
 
-		RunService.PreRender:Wait()
+	RunService.PreRender:Wait()
 
-		AnimatorMethods.ToggleExternalState(true)
-	end)
+	AnimatorMethods.ToggleExternalState(true)
 end
 
 --[[
