@@ -91,8 +91,8 @@ end
 	Sets the @param Camera state to match the CameraState instance.
 ]]
 function CameraState:SetToPlayer(Player: Player, setZoom: boolean?, setMouseLock: boolean?)
-    setZoom = setZoom ~= nil and setZoom or true
-    setMouseLock = setMouseLock ~= nil and setMouseLock or true
+    setZoom = if setZoom ~= nil then setZoom else true
+    setMouseLock = if setMouseLock ~= nil then setMouseLock else true
 
     local Camera = workspace.CurrentCamera
 

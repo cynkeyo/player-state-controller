@@ -5,11 +5,16 @@ local RunService = game:GetService("RunService")
 local CharacterState = require(script.CharacterState)
 local CameraState = require(script.CameraState)
 
+export type stateSetterOptions = {
+    setZoom: boolean,
+    setShiftLock: boolean
+}
+
 type IPlayerState = {
     __index: IPlayerState,
     new: () -> PlayerState,
     FromPlayer: (Player: Player, Character: Model) -> PlayerState,
-    SetToPlayer: (self: PlayerState, Player: Player, Character: Model) -> (),
+    SetToPlayer: (self: PlayerState, Player: Player, Character: Model, options: stateSetterOptions) -> (),
     Destroy: () -> ()
 }
 
@@ -71,10 +76,20 @@ end
 
 	The @param Character must be a R6 rig with a custom Animate script and a Humanoid.
 ]]
-function PlayerState:SetToPlayer(Player: Player, Character: Model)
+function PlayerState:SetToPlayer(Player: Player, Character: Model, options: stateSetterOptions)
+
+    print(options)
+
+    local setZoom = nil
+    local setShiftLock = nil
+
+    if options then
+        setZoom = options.setZoom
+        setShiftLock = options.setShiftLock
+    end
 
     -- Sets the state at the beginning of the frame.
-        self.CameraState:SetToPlayer(Player)
+    self.CameraState:SetToPlayer(Player, setZoom, setShiftLock)
 
     RunService.PreRender:Once(function()
         self.CharacterState:SetToCharacter(Character)
