@@ -1,6 +1,5 @@
 --!native
 --!optimize 2
---!strict
 
 local PlayerState = require(script.PlayerState)
 
@@ -8,7 +7,7 @@ type IPlayerStateController = {
     __index: IPlayerStateController,
     new: () -> PlayerStateController,
     init: (self: PlayerStateController, Player: Player) -> (),
-    GetCurrentState: (self: PlayerStateController) -> PlayerState.PlayerState,
+    GetCurrentState: (self: PlayerStateController) -> PlayerState.PlayerState?,
     SetState: (self: PlayerStateController, PlayerState: PlayerState.PlayerState) -> (),
 }
 
@@ -47,17 +46,26 @@ end
     Initializes the PlayerStateController with the @param Player.
 ]]
 function PlayerStateController:init(Player: Player)
-    self.__Player = Player
-    self.__Character = Player.Character and Player.Character or nil
-
-    self.__CharacterAddedConnection = Player.CharacterAdded:Connect(function(Character)
+    local function loadCharacter(Character)
         --Wait until the character is fully loaded before updating the character member to the new one.
         local Humanoid = Character:WaitForChild("Humanoid")
         local Animate = Character:WaitForChild("Animate")
         local AnimateMethods = Animate:WaitForChild("Methods")
 
+        Humanoid.Died:Once(function()
+            -- Set the character member to nil 
+            self.__Character = nil
+        end)
+
         self.__Character = Character
-    end)
+    end
+
+    self.__Player = Player
+    self.__CharacterAddedConnection = Player.CharacterAdded:Connect(loadCharacter)
+
+    if Player.Character then
+        loadCharacter(Player.Character)
+    end
 
     self.__initialized = true
 end
@@ -67,6 +75,10 @@ end
 ]]
 function PlayerStateController:GetCurrentState()
     assert(self.__initialized, "PlayerStateController must be initialized before calling this method.")
+
+    if not self.__Character then
+        return nil
+    end
 
     return PlayerState.fromPlayer(self.__Player, self.__Character)
 end
