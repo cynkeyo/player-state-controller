@@ -7,7 +7,7 @@ Provides a player state controller class that allows seamless saving and setting
 
 # Installation
 
-Get the latest version in [Releases](https://github.com/cynkeyo/player-state-controller/releases/).
+Get the latest version in [Releases](https://github.com/cynkeyo/player-state-controller/releases/), or simply get the model from [Roblox](https://create.roblox.com/store/asset/138108270501265/playerstatecontroller).
 
 Simply place the Animate script inside StarterCharacterScripts, and place the PlayerModule script inside StarterPlayerScripts.
 
