@@ -536,6 +536,9 @@ end
 local Methods = require(script.Methods)
 
 function playAnimationFromState(animName, transitionTime, humanoid, timePosition, animSpeed) 
+	if not animTable[animName] then
+		return
+	end
 
 	local roll = math.random(1, animTable[animName].totalWeight) 
 	local origRoll = roll
