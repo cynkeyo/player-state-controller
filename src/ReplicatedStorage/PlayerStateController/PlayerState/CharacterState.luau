@@ -90,9 +90,7 @@ end
 local function getCharacterComponents(Character): (Humanoid, BasePart, LocalScript)
 	local Humanoid = Character:FindFirstChild("Humanoid")
 
-	if not Humanoid then
-		error("Couldn't find a Humanoid for the provided character.")
-	end
+	assert(Humanoid, "Couldn't find a Humanoid for the provided character.")
 
 	local Animator = Character:FindFirstChild("Animate")
 

@@ -66,9 +66,7 @@ end
     Saves the player's current state to the SavedState member.
 ]]
 function PlayerStateController:GetCurrentState()
-    if not self.__initialized then
-        error("PlayerStateController must be initialized before calling this method.")
-    end
+    assert(self.__initialized, "PlayerStateController must be initialized before calling this method.")
 
     return PlayerState.fromPlayer(self.__Player, self.__Character)
 end
@@ -79,20 +77,16 @@ end
     Sets the player's state to the @param PlayerState.
 ]]
 function PlayerStateController:SetState(PlayerState: PlayerState.PlayerState)
-    if not self.__initialized then
-        error("PlayerStateController must be initialized before calling this method.")
-    end
+    assert(self.__initialized, "PlayerStateController must be initialized before calling this method.")
 
     if not self.__Character then
-        error("Player character not found, couldn't set state.")
+        return
     end
 
     local options: PlayerState.stateSetterOptions = {
         setZoom = self.SetZoom,
         setShiftLock = self.SetShiftLock
     } 
-
-    print(options)
 
     PlayerState:SetToPlayer(self.__Player, self.__Character, options)
 end

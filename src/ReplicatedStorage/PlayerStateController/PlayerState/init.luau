@@ -77,9 +77,6 @@ end
 	The @param Character must be a R6 rig with a custom Animate script and a Humanoid.
 ]]
 function PlayerState:SetToPlayer(Player: Player, Character: Model, options: stateSetterOptions)
-
-    print(options)
-
     local setZoom = nil
     local setShiftLock = nil
 

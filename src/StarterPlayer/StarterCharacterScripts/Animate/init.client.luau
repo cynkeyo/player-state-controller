@@ -657,9 +657,7 @@ local function cancelAllAnimations()
 end
 
 function setState(animatorState)
-	if not animatorState then
-		error("Expected a animatorState, got nil.")
-	end
+	assert(animatorState, "Expected an animatorState, got nil.")
 
 	jumpAnimTime = animatorState.jumpAnimTime
 	pose = animatorState.currentPose	
