@@ -90,6 +90,7 @@ end
 ]]
 function PlayerStateController:SetState(PlayerState: PlayerState.PlayerState)
     assert(self.__initialized, "PlayerStateController must be initialized before calling this method.")
+    assert(PlayerState, "Missing argument 1, no PlayerState object passed.")
 
     if not self.__Character then
         return
