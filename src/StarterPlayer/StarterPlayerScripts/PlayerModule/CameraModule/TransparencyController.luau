@@ -191,7 +191,6 @@ function TransparencyController:SetInstant(transparency)
 	local now = tick()
 
 	if currentCamera then
-		print(transparency)
 
 		for child, _ in pairs(self.cachedParts) do
 			child.LocalTransparencyModifier = transparency
