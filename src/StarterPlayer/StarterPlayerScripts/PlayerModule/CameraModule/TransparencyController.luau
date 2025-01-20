@@ -186,4 +186,21 @@ function TransparencyController:Update()
 	self.lastUpdate = now
 end
 
+function TransparencyController:SetInstant(transparency)
+	local currentCamera = workspace.CurrentCamera
+	local now = tick()
+
+	if currentCamera then
+		print(transparency)
+
+		for child, _ in pairs(self.cachedParts) do
+			child.LocalTransparencyModifier = transparency
+			self.transparencyDirty = true
+			self.lastTransparency = transparency
+		end
+	end
+
+	self.lastUpdate = now
+end
+
 return TransparencyController

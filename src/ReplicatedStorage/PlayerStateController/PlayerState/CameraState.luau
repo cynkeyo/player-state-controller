@@ -3,6 +3,11 @@
 
 local RunService = game:GetService("RunService")
 
+type AbstractTransparencyController = {
+    lastTransparency: number,
+    SetInstant: (self: any, transparency: number) -> ()
+}
+
 type AbstractCameraController = {
     SetCameraToSubjectDistance: (self: any, desiredSubjectDistance: number, instant: boolean?) -> (),
     GetCameraToSubjectDistance: (self: any) -> number
@@ -15,7 +20,8 @@ type AbstractMouseLockController = {
 
 type AbstractCameraModule = {
     activeCameraController: AbstractCameraController,
-    activeMouseLockController: AbstractMouseLockController
+    activeMouseLockController: AbstractMouseLockController,
+    activeTransparencyController: AbstractTransparencyController
 }
 
 type AbstractPlayerModule = {
@@ -34,7 +40,8 @@ export type CameraState = typeof(setmetatable(
     {} :: {
         CFrame: CFrame,
         SubjectDistance: number,
-        MouseLocked: boolean
+        MouseLocked: boolean,
+        SubjectTransparency: number
     },
     {} :: ICameraState
 ))
@@ -53,6 +60,7 @@ function CameraState.new(): CameraState
     self.CFrame = CFrame.new()
     self.SubjectDistance = 10
     self.MouseLocked = false
+    self.SubjectTransparency = 0
 
     return self
 end 
@@ -76,8 +84,10 @@ function CameraState.fromPlayer(Player: Player): CameraState
 
     local CameraController = CameraModule.activeCameraController
     local MouseLockController = CameraModule.activeMouseLockController
+    local TransparencyController = CameraModule.activeTransparencyController
 
     self.CFrame = workspace.CurrentCamera.CFrame
+    self.SubjectTransparency = TransparencyController.lastTransparency
 
     self.SubjectDistance = CameraController:GetCameraToSubjectDistance()
     self.MouseLocked = MouseLockController:GetIsMouseLocked()
@@ -100,8 +110,11 @@ function CameraState:SetToPlayer(Player: Player, setZoom: boolean?, setMouseLock
 
     local CameraController = CameraModule.activeCameraController
     local MouseLockController = CameraModule.activeMouseLockController
+    local TransparencyController = CameraModule.activeTransparencyController
 
     Camera.CFrame = self.CFrame
+
+    TransparencyController:SetInstant(self.SubjectTransparency)
 
     if setMouseLock then
         CameraController:SetCameraToSubjectDistance(self.SubjectDistance, true)
