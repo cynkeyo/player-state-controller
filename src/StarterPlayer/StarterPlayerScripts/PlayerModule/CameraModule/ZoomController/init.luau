@@ -121,6 +121,7 @@ local Zoom = {} do
 	function Zoom.SetZoomParameters(targetZoom, newZoomDelta, instant)
 		if instant then
 			zoomSpring.x = targetZoom
+			zoomSpring.v = 0
 		end
 
 		zoomSpring.goal = targetZoom
