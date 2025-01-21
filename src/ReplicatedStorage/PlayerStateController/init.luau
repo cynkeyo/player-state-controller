@@ -11,6 +11,11 @@ type IPlayerStateController = {
     SetState: (self: PlayerStateController, PlayerState: PlayerState.PlayerState) -> (),
 }
 
+export type PlayerState = PlayerState.PlayerState
+
+export type CameraState = PlayerState.CameraState
+export type CharacterState = PlayerState.CharacterState
+
 export type PlayerStateController = typeof(setmetatable(
     {} :: {
         SetZoom: boolean,

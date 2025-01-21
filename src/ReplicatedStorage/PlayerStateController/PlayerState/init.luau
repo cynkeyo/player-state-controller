@@ -18,6 +18,10 @@ type IPlayerState = {
     Destroy: () -> ()
 }
 
+export type CharacterState = CharacterState.CharacterState
+
+export type CameraState = CameraState.CameraState
+
 export type PlayerState = typeof(setmetatable(
     {} :: {
         CharacterState: CharacterState.CharacterState,
