@@ -90,8 +90,11 @@ function CameraState.fromPlayer(Player: Player): CameraState
     self.SubjectTransparency = TransparencyController.lastTransparency
 
     self.SubjectDistance = CameraController:GetCameraToSubjectDistance()
-    self.MouseLocked = MouseLockController:GetIsMouseLocked()
 
+    if MouseLockController then
+        self.MouseLocked = MouseLockController:GetIsMouseLocked()
+    end
+    
     return self
 end
 
@@ -121,6 +124,10 @@ function CameraState:SetToPlayer(Player: Player, setZoom: boolean?, setMouseLock
     end
     
     if setMouseLock then
+        if not MouseLockController then
+            return
+        end
+
         if MouseLockController:GetIsMouseLocked() ~= self.MouseLocked then
             MouseLockController:DoMouseLockSwitch(nil, Enum.UserInputState.Begin)
         end
