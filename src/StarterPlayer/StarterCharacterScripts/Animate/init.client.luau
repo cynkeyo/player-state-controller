@@ -533,7 +533,7 @@ end
 -- additional stuff added for exposing methods for character state saving
 -- cynkeyo's stuff ///
 
-local Methods = require(script.Methods)
+local Methods = require(script:WaitForChild("Methods"))
 
 function playAnimationFromState(animName, transitionTime, humanoid, timePosition, animSpeed) 
 	if not animTable[animName] then
