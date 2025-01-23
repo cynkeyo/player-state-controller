@@ -1,11 +1,11 @@
 Provides a player state controller class that allows seamless saving and setting of the current player's state. It works by using a forked modified PlayerModule and Animate script, with exposed internal methods.
 
 # Table of Contents
-* [Installation](#installation)
-* [Example](#how-to-use)
+* [Setup](#Setup)
+* [How to use](#how-to-use)
 * [Known Issues](#known-issues)
 
-# Installation
+# Setup
 
 Get the latest version in [Releases](https://github.com/cynkeyo/player-state-controller/releases/), or simply get the model from [Roblox](https://create.roblox.com/store/asset/138108270501265/playerstatecontroller).
 
