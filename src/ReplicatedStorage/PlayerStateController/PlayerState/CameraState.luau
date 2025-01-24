@@ -119,7 +119,7 @@ function CameraState:SetToPlayer(Player: Player, setZoom: boolean?, setMouseLock
 
     TransparencyController:SetInstant(self.SubjectTransparency)
 
-    if setMouseLock then
+    if setZoom then
         CameraController:SetCameraToSubjectDistance(self.SubjectDistance, true)
     end
     
