@@ -1,8 +1,6 @@
 --!native
 --!optimize 2
 
-local RunService = game:GetService("RunService")
-
 type AbstractTransparencyController = {
     lastTransparency: number,
     SetInstant: (self: any, transparency: number) -> ()

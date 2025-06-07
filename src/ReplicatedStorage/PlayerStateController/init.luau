@@ -54,8 +54,6 @@ function PlayerStateController:init(Player: Player)
     local function loadCharacter(Character)
         --Wait until the character is fully loaded before updating the character member to the new one.
         local Humanoid = Character:WaitForChild("Humanoid")
-        local Animate = Character:WaitForChild("Animate")
-        local AnimateMethods = Animate:WaitForChild("Methods")
 
         Humanoid.Died:Once(function()
             -- Set the character member to nil 
@@ -76,7 +74,9 @@ function PlayerStateController:init(Player: Player)
 end
 
 --[[
-    Saves the player's current state to the SavedState member.
+    @return @PlayerState PlayerState
+
+    Gets the current player state.
 ]]
 function PlayerStateController:GetCurrentState()
     assert(self.__initialized, "PlayerStateController must be initialized before calling this method.")
@@ -92,6 +92,7 @@ end
     @param @PlayerState PlayerState
 
     Sets the player's state to the @param PlayerState.
+    This process is deffered to the PreRender step.
 ]]
 function PlayerStateController:SetState(PlayerState: PlayerState.PlayerState)
     assert(self.__initialized, "PlayerStateController must be initialized before calling this method.")
