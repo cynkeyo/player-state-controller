@@ -13,7 +13,7 @@ Simply place the Animate script inside StarterCharacterScripts, and place the Pl
 
 # How to use
 
-Saving state and setting it to player:
+Saving state and setting it to thr player:
 ```lua
 local PlayerStateControllerClass = require("path to the module")
 local Player = game:GetService("Players").LocalPlayer
