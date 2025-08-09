@@ -24,7 +24,7 @@ local savedState = nil
 playerStateController:init(Player)
 
 savedState = playerStateController:GetCurrentState()
-playerStateController:SetState(SavedState)
+playerStateController:SetState(savedState)
 ```
 
 # Known Issues
