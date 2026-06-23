@@ -373,6 +373,9 @@ function ControlModule:OnCharacterAdded(char)
 		self.humanoid = char:FindFirstChildOfClass("Humanoid")
 	end
 
+    -- by default AutoJumpEnabled is true when the humanoid instance is created, so disable it
+    self.humanoid.AutoJumpEnabled = false
+
 	if self.touchGui then
 		self.touchGui.Enabled = true
 	end
