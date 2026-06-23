@@ -4,6 +4,14 @@
 	having to modify Roblox-supplied scripts.
 
 	2018 PlayerScripts Update - AllYourBlox
+
+    The following scripts in the module were edited to work correctly with the player-state-controller class and or add important features:
+    - MouseLockController, CameraModule -> mobile shiftlock support
+    - ControlModule -> set player's Humanoid AutoJumpEnabled property to false upon CharacterAdded
+    - TransparencyController -> change character opacity instantly
+    - BaseCamera, ZoomController -> change zoom state
+
+    All the changes made to this module can be tracked within the github repository (cynkeyo/player-state-controller) after the commit #2a291dc
 --]]
 
 local PlayerModule = {}
