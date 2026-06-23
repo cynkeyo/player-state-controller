@@ -1,13 +1,18 @@
 --[[
 	MouseLockController - Replacement for ShiftLockController, manages use of mouse-locked mode
 	2018 Camera Update - AllYourBlox
+	
+	mobile support added by gAOREK
 --]]
 
 --[[ Constants ]]--
 local DEFAULT_MOUSE_LOCK_CURSOR = "rbxasset://textures/MouseLockedCursor.png"
 
+local MOUSE_LOCK_ICON_ON = "rbxassetid://4109432113"
+local MOUSE_LOCK_ICON_OFF = "rbxassetid://4109426420"
+
 local CONTEXT_ACTION_NAME = "MouseLockSwitchAction"
-local MOUSELOCK_ACTION_PRIORITY = Enum.ContextActionPriority.Default.Value
+local MOUSELOCK_ACTION_PRIORITY = Enum.ContextActionPriority.Medium.Value
 
 local Util = require(script.Parent:WaitForChild("CameraUtils"))
 
@@ -33,7 +38,7 @@ function MouseLockController.new()
 	self.boundKeys = {Enum.KeyCode.LeftShift, Enum.KeyCode.RightShift} -- defaults
 
 	self.mouseLockToggledEvent = Instance.new("BindableEvent")
-
+	
 	local boundKeysObj = script:FindFirstChild("BoundKeys")
 	if (not boundKeysObj) or (not boundKeysObj:IsA("StringValue")) then
 		-- If object with correct name was found, but it's not a StringValue, destroy and replace
@@ -163,7 +168,7 @@ function MouseLockController:OnMouseLockToggled()
 end
 
 function MouseLockController:DoMouseLockSwitch(name, state, input)
-	if state == Enum.UserInputState.Begin then
+	if state == Enum.UserInputState.Begin or UserInputService.TouchEnabled then
 		self:OnMouseLockToggled()
 		return Enum.ContextActionResult.Sink
 	end
@@ -171,8 +176,43 @@ function MouseLockController:DoMouseLockSwitch(name, state, input)
 end
 
 function MouseLockController:BindContextActions()
-	ContextActionService:BindActionAtPriority(CONTEXT_ACTION_NAME, function(name, state, input) return self:DoMouseLockSwitch(name, state, input) end,
-		false, MOUSELOCK_ACTION_PRIORITY, unpack(self.boundKeys))
+	--behold, the worst part of this whole script
+        print(UserInputService.TouchEnabled)
+	if UserInputService.TouchEnabled then
+		self.shiftLock = false
+		
+        -- Creating the  b u t t o n  with unecessary   s  p  a  c  e   between    s   t   u   f   f
+        if PlayersService.LocalPlayer.PlayerGui:FindFirstChild("MobileShiftLock") then return end
+		local sg 				=	Instance.new("ScreenGui",PlayersService.LocalPlayer.PlayerGui)
+			  sg.Name 			= 	"MobileShiftLock"
+			  sg.ResetOnSpawn 	= 	false
+		
+		local button 			= 	Instance.new("ImageButton",sg)
+			  button.Name 		= 	"ShiftLockButton"
+			  button.Position 	= 	UDim2.new(1,-65,0.5,-15)
+			  button.Size 		= 	UDim2.new(0,55,0,55)
+			  button.Image 		= 	MOUSE_LOCK_ICON_OFF
+			
+			  button.BackgroundTransparency = 5280 --big name, big brain, big number
+		
+		button.MouseButton1Click:Connect(function()
+			self.shiftLock = not self.shiftLock
+			
+			button.Image =  self.shiftLock and MOUSE_LOCK_ICON_ON  -- I ALSO LIKE USING CAPS AND EXTRA LONG VARIABLE NAMES
+											or MOUSE_LOCK_ICON_OFF
+											
+			return self:DoMouseLockSwitch()
+		end)
+			
+		-- obligatory stuff that i have no clue what it does but used bc it wouldnt work any other way
+		self.actionGui = sg
+		self.actionButton = button
+	else
+		-----------------the original code-------------------------------------------------------------------------------------------------------------------------
+		--[[]]ContextActionService:BindActionAtPriority(CONTEXT_ACTION_NAME, function(name, state, input) return self:DoMouseLockSwitch(name, state, input) end,---
+		--[[]] false, MOUSELOCK_ACTION_PRIORITY, unpack(self.boundKeys))                                                                                        ---
+		-----------------------------------------------------------------------------------------------------------------------------------------------------------
+	end
 end
 
 function MouseLockController:UnbindContextActions()
@@ -184,6 +224,7 @@ function MouseLockController:IsMouseLocked()
 end
 
 function MouseLockController:EnableMouseLock(enable)
+    print("yo")
 	if enable~=self.enabled then
 
 		self.enabled = enable

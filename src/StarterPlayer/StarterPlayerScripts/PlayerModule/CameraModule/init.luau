@@ -120,15 +120,13 @@ function CameraModule.new()
 	self.activeTransparencyController = TransparencyController.new()
 	self.activeTransparencyController:Enable(true)
 	
-	if not UserInputService.TouchEnabled then
-		self.activeMouseLockController = MouseLockController.new()
-		local toggleEvent = self.activeMouseLockController:GetBindableToggleEvent()
-		if toggleEvent then
-			toggleEvent:Connect(function()
-				self:OnMouseLockToggled()
-			end)
-		end
-	end
+    self.activeMouseLockController = MouseLockController.new()
+    local toggleEvent = self.activeMouseLockController:GetBindableToggleEvent()
+    if toggleEvent then
+        toggleEvent:Connect(function()
+            self:OnMouseLockToggled()
+        end)
+    end
 	
 	self:ActivateCameraController(self:GetCameraControlChoice())
 	self:ActivateOcclusionModule(Players.LocalPlayer.DevCameraOcclusionMode)
