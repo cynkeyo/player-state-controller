@@ -42,7 +42,7 @@ function PlayerState.new(): PlayerState
     local self = setmetatable({}, PlayerState)
 
     self.CharacterState = CharacterState.new()
-    self.PlayerState = PlayerState.new()
+    self.CameraState = CameraState.new()
 
     return self
 end
@@ -63,7 +63,7 @@ function PlayerState.fromPlayer(Player: Player, Character: Model): PlayerState
     -- Gets the state of the camera at the end of the render pipeline.
 
     RunService.PostSimulation:Wait()
-    
+
     self.CameraState = CameraState.fromPlayer(Player)
     self.CharacterState = CharacterState.fromCharacter(Character) 
 
